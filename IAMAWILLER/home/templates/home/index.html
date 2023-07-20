@@ -1,0 +1,366 @@
+{% extends 'home/base.html' %}
+{% load static willer_tags %}
+{% block content %}
+
+<div id="app">
+<div id="slideshow" :style="{transform: 'translateX(' + (-100 * page) + 'vw)'}">
+
+    <div class="container">
+        <div class="title">
+            <div class="slide">
+                <h2>{{ texts.welcome_title }}</h2>
+            </div>
+        </div>
+        <div class="slide" data-page="0">
+    
+            <div class="domanda">
+                {{ texts.intro}}
+            </div>
+    
+    
+            <div class="pagination">
+                <a @click="nextPage()" class="btn next">{{ texts.next }} <i class="far fa-arrow-right"></i></a>
+            </div>
+            
+        </div>
+    </div>
+
+
+
+
+
+    
+    <div class="container">
+        <div class="title">
+            <div class="slide">
+                <div class="back">
+                    <a @click="prevPage()"><i class="far fa-arrow-left"></i></a>
+
+                </div>
+                <h2>{{ texts.cosa_vuoi_segnalare }}</h2>
+            </div>
+        </div>
+        <div class="slide" data-page="0">
+    
+           
+            <img src="{% static 'home/img/people.png' %}" alt="Join us to make people's lives easier">
+            
+            <div class="choices">
+
+                <div class="choice">
+                <label for="field-type-metro" @click="location_type='M'; nextPage(); geoloc()">
+                    <i class="fa-solid fa-train-subway-tunnel"></i>
+                    <h3>{{ texts.metro }}</h3>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </label>
+                </div>
+
+                <div class="choice">
+                    <label for="field-type-restaurant" @click="location_type='R'; nextPage(); geoloc()">
+                        <i class="fa-solid fa-fork-knife"></i>
+                        <h3>{{ texts.ristoranti }}</h3>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </label>
+                </div>
+
+{% comment %}
+                <div class="choice">
+                    <label for="field-type-hotel" @click="location_type='H'; nextPage(); geoloc()">
+                        <i class="fa-solid fa-hotel"></i>
+                        <h3>{{ texts.hotels }}</h3>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </label>
+                </div>
+{% endcomment %}
+            </div>
+    
+            
+        </div>
+    </div>
+
+{% if request.user.is_anonymous %}
+    <div class="container" v-show="location_type!='M'">
+        <div class="title">
+            <div class="slide">
+                <div class="back">
+                    <a @click="prevPage()"><i class="far fa-arrow-left"></i></a>
+
+                </div>
+                <h2>{{ texts.esigenze_title }}</h2>
+            </div>
+        </div>
+
+        <div class="slide" data-page="0">
+                
+            
+            <div class="domanda">
+                <p>{{ texts.esigenze_intro }}</p>
+                <ul>
+                    <li v-for="esigenza in esigenze" :key="esigenza.pk">
+                        <label><input v-model="esigenze_utente" type="checkbox" :value="esigenza.pk"> [[esigenza.fields.nome]]</label>
+                    </li>
+                </ul>
+
+
+            </div>
+    
+    
+            <div class="pagination">
+                <a @click="nextPage()" class="btn next">{{ texts.next }} <i class="far fa-arrow-right"></i></a>
+            </div>
+            
+        </div>
+    </div>
+{% endif %}
+
+    <div class="container">
+        <div class="title">
+            <div class="slide">
+                <div class="back">
+                    <a @click="prevPage()"><i class="far fa-arrow-left"></i></a>
+
+                </div>
+                <h2 v-if="location_type == 'M'">{{ texts.scegli_stazione }}</h2>
+                <h2 v-if="location_type != 'M'">{{ texts.scegli_luogo }}</h2>
+            </div>
+        </div>
+        
+    <div class="slide" data-page="1">
+        
+        <p class="domanda" v-show="geolocalizing"><i class="fa-regular fa-spinner fa-spin"></i>  {{ texts.cercando_posizione }}</p>
+        <p class="domanda" v-show="geolocalizing_error"> {{ texts.errore_posizione }} [[geolocalizing_error]]</p>
+            
+            <div class="choices">
+                <div class="choice" v-show="location_type != 'M'">
+                    <label class="search">
+                        <form @submit.prevent="loadPlaces()">
+                            <input placeholder="{{ texts.cerca_luoghi }}" type="search" v-model="search_query">
+                            <button><i class="fa-solid fa-search"></i></button>
+                        </form>
+ 
+                    </label>
+                </div>
+
+                <div class="choice" v-for="station in stations">
+                    <input v-model="station_id" type="radio" :value="station.pk" :id="'station-' + station.pk">
+                    <label @click="placeChosen(station)" :for="'station-' + station.pk">
+                        <i class="fa-solid fa-train-subway-tunnel"></i>
+                        <div class="place-info">
+                            <h3 v-if="station">[[station.fields.name]]</h3>
+                            <p v-if="location_type != 'M'">[[station.fields.address]]</p>   
+                        </div>
+                        
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </label>
+                </div>
+            </div>
+    
+    
+            
+        </div>
+    </div>
+
+
+
+  
+
+
+    <div class="container" v-show="location_type=='M'">
+        <div class="title">
+            <div class="slide">
+                <div class="back">
+                    <a @click="prevPage()"><i class="far fa-arrow-left"></i></a>
+
+                </div>
+                <h2>{{ texts.scegli_dispositivo }}</h2>
+            </div>
+        </div>
+        <div class="slide" data-page="2">
+    
+    
+            <h2 v-if="station">[[station.fields.name]]</h2>
+            
+            <div class="choices">
+
+                <div class="choice" v-for="lift in lifts">
+                    <input v-model="lift_id" type="radio" :value="lift.pk" :id="'lift-' + lift.pk">
+                    <label @click="this.lift = lift; this.status=null; nextPage();" :for="'lift-' + lift.pk">
+                        <div class="place-info">
+                        <img v-if="lift.fields.image" class="preview" :src="'https://open.willeasy.app/lifts/' + lift.pk + '/thumbnail/'" alt="">
+                        <h3>[[lift.fields.friendly_name || lift.fields.name]]</h3>
+                        <p>[[lift.fields.from_area]] <i class="fa-regular fa-arrow-right"></i>  [[lift.fields.to_area]]</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </label>
+                </div>
+            </div>
+    
+    
+            <div class="pagination">
+                <a @click="prevPage()" class="btn prev"><i class="far fa-arrow-left"></i> {{ texts.back }}</a>
+            </div>
+            
+        </div>
+    </div>
+
+
+
+    <div class="container" v-show="location_type=='M'">
+        <div class="title">
+            <div class="slide">
+                <div class="back">
+                    <a @click="prevPage()"><i class="far fa-arrow-left"></i></a>
+                </div>
+                <h2>{{ texts.sta_funzionando_title }}</h2>
+            </div>
+        </div>  
+        <div class="slide" data-page="3">
+
+        <div class="place-preview" v-if="lift">
+            <h3>[[station.fields.name]]</h3>
+            <img :src="'https://open.willeasy.app/lifts/' + lift.pk + '/thumbnail/'" alt="">
+            <div class="place-name">
+            <h4>[[lift.fields.friendly_name || lift.fields.name]]</h4>
+            <p>[[lift.fields.from_area]] <i class="fa-regular fa-arrow-right"></i>  [[lift.fields.to_area]]</p>
+            </div>
+        </div>
+
+
+        <div class="status">
+            <button class="btn ok" :class="{active:this.status === 1}" @click="status=1">
+                <i class="fa-regular fa-face-smile"></i>
+                <p>{{ texts.working }}</p>
+            </button>
+            <button class="btn ko" :class="{active:this.status === 0}" @click="status=0">
+                <i class="fa-regular fa-face-sad-tear"></i>
+                <p>{{ texts.not_working }}</p>
+            </button>
+        </div>
+
+        <button @click="sendFeedback()" class="btn send" v-show="this.status !== null">
+            <i class="fa-solid fa-send"></i>
+            {{ texts.invia_stato_ascensore }}
+        </button>
+
+        
+    </div>
+</div>
+
+<div class="container" v-show="location_type!='M'">
+    <div class="title">
+        <div class="slide">
+            <div class="back">
+                <a @click="prevPage()"><i class="far fa-arrow-left"></i></a>
+            </div>
+            <h2 v-if="station">[[station.fields.name]]</h2>
+        </div>
+    </div>
+
+    <div class="slide" data-page="4">
+        <div class="choices">
+
+            <div class="choice" v-for="area in areas">
+                <input type="radio" :value="area.pk" :id="'area-' + area.pk">
+                <label @click="nextPage(); this.area=area" :for="'area-' + area.pk">
+                    <i class="fa-solid fa-train-subway-tunnel"></i>
+                    <h3 v-if="area">[[area.nome]]</h3>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </label>
+            </div>
+        </div>
+
+        <div class="pagination" v-show="compilato">
+            <a v-show="!sending" @click="saveAnswers()" class="btn next">{{ texts.invia }} <i class="far fa-arrow-right"></i></a>
+            <a v-show="sending" href="" class="btn"><i class="fa-regular fa-spinner fa-spin"></i> {{ texts.inviando }}</a>
+        </div>
+    </div>
+</div>
+
+
+    <div class="container" v-show="location_type!='M'">
+        <div class="title">
+            <div class="slide">
+                <div class="back">
+                    <a @click="prevPage()"><i class="far fa-arrow-left"></i></a>
+                </div>
+                <h2 v-if="area && station">[[station.fields.name]]: [[area.nome]]</h2>
+            </div>
+        </div>
+        
+        <div class="slide" data-page="5">            
+            
+            <div class="domanda" v-for="domanda in area.domande" v-if="area" :key="domanda.pk">
+                <h3>[[domanda.domanda]]</h3>
+                
+                <ul v-if="domanda.type == 'radio' || domanda.type == 'checkbox'">
+                    <li v-for="risposta in domanda.risposte" :key="risposta.pk">
+                        <label><input v-model="risposte[domanda.pk]" :name="domanda.pk" :type="domanda.type" :value="risposta.pk"> [[risposta.risposta]]</label>
+                    </li>
+                </ul>
+
+                <input type="number" min="0" v-if="domanda.type == 'number'" v-model="risposte[domanda.pk]">
+                <input type="text" v-if="domanda.type == 'text'" v-model="risposte[domanda.pk]">
+
+                <div class="file-preview" v-if="domanda.type == 'image'">
+                    <label class="btn">
+                        <input hidden multiple type="file" accept="image/*" @change="showFilePreview(domanda, $event)">
+                        <i class="fa-regular fa-upload"></i>
+                        {{ texts.upload_images }}
+                    </label>
+
+                    <div class="thumbnails">
+                        <img v-for="image in risposte[domanda.pk]" :src="image.url" alt="" class="filePreview">
+                    </div>
+                </div>
+
+                <div class="vote" v-if="domanda.type == 'vote'">
+                    <input type="radio" value="0" v-model="risposte[domanda.pk]" :id="'field-' + domanda.pk + '-' + 0"> <label :for="'field-' + domanda.pk + '-' + 0">0</label>
+                    <input type="radio" value="1" v-model="risposte[domanda.pk]" :id="'field-' + domanda.pk + '-' + 1"> <label :for="'field-' + domanda.pk + '-' + 1">1</label>
+                    <input type="radio" value="2" v-model="risposte[domanda.pk]" :id="'field-' + domanda.pk + '-' + 2"> <label :for="'field-' + domanda.pk + '-' + 2">2</label>
+                    <input type="radio" value="3" v-model="risposte[domanda.pk]" :id="'field-' + domanda.pk + '-' + 3"> <label :for="'field-' + domanda.pk + '-' + 3">3</label><br>
+
+                    <p class="text-vote">
+                        [[ ['Inaccessibile', 'Difficoltoso', 'Discreto/buono', 'Ottimo/accessibile'][ risposte[domanda.pk] ] ]]
+                    </p>
+
+                </div>
+
+            </div>
+    
+            <div class="pagination">
+                <a @click="prevPage()" class="btn prev"><i class="far fa-arrow-left"></i> {{ texts.scegli_area }}</a>
+            </div>
+
+            
+        </div>
+    </div>
+    
+
+
+<div class="container">
+    <div class="title">
+        <div class="slide">
+            <h2>{{ texts.thank_you }}</h2>
+        </div>
+    </div>
+<div class="slide" data-page="6">
+ 
+    <div class="domanda">
+        {{ texts.thank_you_text }}
+    </div>
+
+    <div class="pagination">
+        <a @click="page=1" class="btn prev"><i class="far fa-arrow-left"></i> {{ texts.new }}</a>
+  
+    </div>
+    
+</div>
+</div>
+
+
+
+
+</div>
+
+</div>
+{% endblock content %}
