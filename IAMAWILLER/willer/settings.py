@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4qg!x&8oo-w*irmyuspg4)epi+&^ji#7um4tbim5!sv==0met5'
+SECRET_KEY = '#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -91,9 +91,9 @@ DATABASES = {
     },
     'voxpop': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'voxpop',
-        'USER': 'voxpop',
-        'PASSWORD': 'Lì es bona!',
+        'NAME': '',
+        'USER': '',
+        'PASSWORD': '',
         'HOST': '127.0.0.1',
        'PORT': '5431',
     }
@@ -159,15 +159,15 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 # Amazon SES
 EMAIL_HOST = 'email-smtp.eu-west-1.amazonaws.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'AKIARTVD4Y3VMBKGIITZ'
-EMAIL_HOST_PASSWORD = 'BAt7Nvo)6yQFerl58yR836VqzzxMLSW9934fI8J'
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = True
 
-DEFAULT_FROM_EMAIL = 'info@infofactory.it'
+DEFAULT_FROM_EMAIL = 'info@willeasy.net'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 ADMINS = (
-    ('Nello Polesello', 'polesello@infofactory.it'),
+    ('Willeasy', 'info@willeasy.net'),
 )
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024 # 50 MB
